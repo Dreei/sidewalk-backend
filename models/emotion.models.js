@@ -6,7 +6,7 @@ const emotionSchema = new Schema({
   emotion: { 
     type: String, 
     required: true,
-    enum: ['pleasant', 'neutral', 'uncomfortable', 'unsafe']
+    enum: ['good!', 'okay!' ,'neutral', 'uneasy', 'unsafe']
   },
   userType: {
     type: String,
