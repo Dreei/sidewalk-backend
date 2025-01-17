@@ -290,7 +290,38 @@ async function generateGPT4Report(data) {
     1. Summary of key findings
     2. Analysis of top issues
     3. Sentiment analysis
-    4. Recommendations for improvement`;
+    4. Recommendations for improvement
+
+    Please give your answer in JSON format with the following example delimited with single quotes:
+    '
+    {
+      "summary": {
+        "Total Reports": 2,
+        "Types of Issues Identified": [{"Obstruction": "1 report (50.0%)"} , {"Broken Pavement": "1 report (50.0%)"}],
+        "Insights": [
+          {
+            "Equal Distribution of Issues": "The issues reported are evenly split between obstructions and broken pavement. This indicates a need for attention on both types of concerns within the area."
+          },
+          {
+            "*No Emotional Feedback": "The absence of emotional feedback suggests that the reports are purely factual, potentially indicating a lack of engagement or concern from the community regarding sidewalk conditions."
+          },
+        ],
+        "Recommendations":"[
+          {
+            "Targeted Inspections":"Conduct thorough inspections of the affected area to verify the reported issues. Prioritize addressing both the obstruction and the broken pavement, as both pose potential safety hazards"
+          },
+          {
+            "Community Engagement":"Implement a survey or community outreach program to gather more feedback on sidewalk conditions. This can help identify additional issues that may not have been reported and gauge community sentiment towards sidewalk maintenance"
+          },
+          {
+            "Maintenance Schedule":"Develop a regular maintenance schedule that includes checks for obstructions and pavement integrity. This proactive approach could reduce the likelihood of future reports and enhance safety and accessibility."
+          }
+        ]
+      }
+    }
+    '
+    `;
+
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4-1106-preview',
