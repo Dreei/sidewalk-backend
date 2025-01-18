@@ -4,6 +4,7 @@ import Report from '../models/report.models.js';
 import Emotion from '../models/emotion.models.js';
 import dotenv from 'dotenv';
 import Location from '../models/location.models.js';
+import { stringify } from 'postcss';
 dotenv.config();
 
 const analyticsRouter = express.Router();
@@ -148,6 +149,37 @@ analyticsRouter.get('/location-emotions', async (req, res) => {
     }
     }
 );
+
+analyticsRouter.get('/chat', async (req, res) => {
+    try {
+       const {area_name, chat_logs} = req.body;
+        if (!area_name) {
+            return res.status(400).json({ message: 'Area parameter is required' });
+        }
+        console.log('Generating detailed report for area:', area_name);
+        // Array of locations
+        const theArea = await Location.find({ 'area' : area_name });
+        const theAreaReports = [];
+        const theAreaEmotions = [];
+        for (const location of theArea) {
+            const reports = await Report.find({ 'location': location._id }).populate('location');
+            const emotions = await Emotion.find({ 'location': location._id }).populate('location');
+            theAreaReports.push(...reports);
+            theAreaEmotions.push(...emotions);
+        }
+        const areaData = {
+            name: area_name,
+            chat_logs: chat_logs,
+            reports: theAreaReports,
+            emotions: theAreaEmotions
+        };
+        const report = await generateChat(areaData);
+        res.json({ report });
+    } catch (err) {
+        console.error('Error generating detailed report:', err);
+        res.status(500).json({ message: err.message });
+    }
+});
 
 // Original Helper Functions
 function getTopIssues(reports) {
@@ -367,6 +399,37 @@ async function generateAreaReport(data) {
     console.error('Error generating area report:', error);
     throw new Error('Failed to generate area report');
   }
+}
+
+async function generateChat(data) {
+    console.log("generating data for ", data.name);
+  try {
+    const systemPrompt = `Analyze sidewalk condition data for a specific area. 
+    Provide concise insights and targeted recommendations. Also Analyze the array of chats: ${chat_logs}, with the last index
+    being the latest chat and answer the user based on area data: Reports:${reports}, Emotions:${emotions}`;
+
+    const userPrompt = `Generate an answer for ${chat_logs[chat_logs.length-1]} based on the following data:
+    Area Name: ${data.name}
+    Reports: ${data.reports}
+    Emotions: ${data.emotions}
+    `;
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 450,
+    });
+
+    return completion.choices[0].message.content;
+  } catch (error) {
+    console.error('Error generating area report:', error);
+    throw new Error('Failed to generate area report');
+  }
+  
 }
 
 export default analyticsRouter;
